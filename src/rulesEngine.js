@@ -293,11 +293,9 @@ function scanDiff(diffResult, rules) {
       const addedLines = (hunk.lines || []).filter((line) => line && line.type === 'add');
       const addedText = addedLines.map((line) => line.content).join('\n');
       for (const r of applicable.filter((rule) => rule.multiline)) {
-        let offset = 0;
-        while (offset < addedText.length) {
-          const match = r._re.exec(addedText.slice(offset));
-          if (!match) break;
-          const beforeMatch = addedText.slice(offset, offset + match.index);
+        const pattern = new RegExp(r.pattern, `${r.flags}g`);
+        for (const match of addedText.matchAll(pattern)) {
+          const beforeMatch = addedText.slice(0, match.index);
           const addedLineIndex = beforeMatch.split('\n').length - 1;
           const line = addedLines[addedLineIndex];
           if (line) {
@@ -310,7 +308,6 @@ function scanDiff(diffResult, rules) {
               rule: r.id,
             });
           }
-          offset += match.index + match[0].length;
         }
       }
       for (const l of hunk.lines || []) {
