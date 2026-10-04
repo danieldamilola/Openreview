@@ -213,6 +213,7 @@ function validateRule(raw, seenIds) {
       files: files.map((f) => f.trim()),
       pattern,
       flags,
+      multiline: raw.multiline === true,
       message,
       suggestion: raw.suggestion === undefined || raw.suggestion === null ? '' : String(raw.suggestion),
       _re: re,
@@ -289,9 +290,32 @@ function scanDiff(diffResult, rules) {
     const applicable = (rules || []).filter((r) => matchesAnyGlob(file.file, r.files));
     if (applicable.length === 0) continue;
     for (const hunk of file.hunks || []) {
+      const addedLines = (hunk.lines || []).filter((line) => line && line.type === 'add');
+      const addedText = addedLines.map((line) => line.content).join('\n');
+      for (const r of applicable.filter((rule) => rule.multiline)) {
+        let offset = 0;
+        while (offset < addedText.length) {
+          const match = r._re.exec(addedText.slice(offset));
+          if (!match) break;
+          const beforeMatch = addedText.slice(offset, offset + match.index);
+          const addedLineIndex = beforeMatch.split('\n').length - 1;
+          const line = addedLines[addedLineIndex];
+          if (line) {
+            findings.push({
+              file: file.file,
+              line: line.newLine,
+              severity: r.severity,
+              message: r.message,
+              suggestion: r.suggestion || undefined,
+              rule: r.id,
+            });
+          }
+          offset += match.index + match[0].length;
+        }
+      }
       for (const l of hunk.lines || []) {
         if (!l || l.type !== 'add') continue;
-        for (const r of applicable) {
+        for (const r of applicable.filter((rule) => !rule.multiline)) {
           let hit = false;
           try {
             hit = r._re.test(l.content);
