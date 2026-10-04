@@ -1,6 +1,6 @@
 {
   "$schema": "node_modules/wrangler/config-schema.json",
-  "name": "openreview0",
+  "name": "openreview-webhook",
   "main": "cloudflare/worker.js",
   "compatibility_date": "2026-10-04",
   "vars": {
