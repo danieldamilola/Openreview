@@ -23,7 +23,7 @@ will be that URL followed by `/webhook`.
 ## 2. Register the GitHub App
 
 In GitHub, open **Settings → Developer settings → GitHub Apps → New GitHub
-App**. Set the name to `OpenReview`, add the project URL, and upload
+App**. Set the name to `OpenReview0`, add the project URL, and upload
 `assets/openreview0-app-icon.png` as its logo.
 Use `https://openreview-webhook.openreview0.workers.dev/webhook` for the
 webhook URL. Choose a strong random
@@ -31,7 +31,8 @@ webhook secret and keep it for the next step.
 
 Request these repository permissions:
 
-- **Contents: Read.** The reviewer fetches pull request diffs.
+- **Contents: Read and write.** The Worker dispatches the central review job.
+  The workflow uses a read-only contents token to fetch each pull request diff.
 - **Pull requests: Read and write.** The reviewer reads diffs and posts inline
   review comments.
 - **Issues: Read and write.** Pull request summary comments use the issues API.
@@ -41,17 +42,12 @@ visibility to **Only on this account** unless you plan to let other GitHub
 accounts install OpenReview. Create the app, but do not install it until the
 secrets below are configured.
 
-## 3. Create a dispatch token and add the app secrets
+## 3. Add the App credentials
 
-The Worker needs a narrowly scoped token to start the central workflow. In
-GitHub, go to **Settings → Developer settings → Personal access tokens → Fine-
-grained tokens → Generate new token**. Choose `danieldamilola` as the resource
-owner, select only the `Openreview` repository, and grant **Contents: Read and
-write**. Copy the token into a Cloudflare Worker secret named
-`DISPATCH_TOKEN`.
-
-Download a private key from the GitHub App settings. In the OpenReview
-repository, open **Settings → Secrets and variables → Actions** and add:
+The Worker uses a short-lived GitHub App installation token to start the
+central workflow, so it does not need a personal access token. In the
+OpenReview repository, open **Settings → Secrets and variables → Actions** and
+add:
 
 - Secret `OPENREVIEW_APP_ID`: the numeric App ID shown in the app settings.
 - Secret `OPENREVIEW_APP_PRIVATE_KEY`: the downloaded private key contents.
@@ -63,10 +59,14 @@ Add these repository variables:
 - `REVIEW_BASE_URL` = `https://generativelanguage.googleapis.com/v1beta/openai/`
 - `REVIEW_MODEL` = `gemini-3.5-flash-lite`
 
-Set the dispatch token and webhook secret in the Worker:
+In the GitHub App settings, change **Contents** to **Read and write** if it is
+still set to read-only. Save the permission change.
+
+Set the App credentials and the same webhook secret in the Worker:
 
 ```sh
-npx wrangler@4 secret put DISPATCH_TOKEN
+npx wrangler@4 secret put OPENREVIEW_APP_ID
+npx wrangler@4 secret put OPENREVIEW_APP_PRIVATE_KEY
 npx wrangler@4 secret put WEBHOOK_SECRET
 ```
 
@@ -76,7 +76,8 @@ out of chat and source files.
 ## 4. Install the app
 
 In the GitHub App settings, choose **Install App**. Select OpenReview and the
-repositories you want it to review, or choose all repositories. Pull requests
+repositories you want it to review, or choose all repositories. OpenReview
+must be selected so the Worker can dispatch review jobs there. Pull requests
 and new commits will trigger reviews. Comment `/review` on a PR to request a
 fresh review.
 

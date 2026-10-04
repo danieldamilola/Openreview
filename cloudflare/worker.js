@@ -29,11 +29,79 @@ async function githubRequest(url, options) {
   });
   const text = await response.text();
   if (!response.ok) throw new Error(`GitHub API ${response.status}: ${text.slice(0, 500)}`);
+  return text ? JSON.parse(text) : null;
+}
+
+function base64Url(bytes) {
+  let binary = '';
+  for (const byte of bytes) binary += String.fromCharCode(byte);
+  return btoa(binary).replace(/=/g, '').replace(/\+/g, '-').replace(/\//g, '_');
+}
+
+function pemBytes(pem) {
+  const isPkcs1 = pem.includes('-----BEGIN RSA PRIVATE KEY-----');
+  const base64 = pem.replace(/-----BEGIN (?:RSA )?PRIVATE KEY-----|-----END (?:RSA )?PRIVATE KEY-----|\s/g, '');
+  const binary = atob(base64);
+  const key = Uint8Array.from(binary, (char) => char.charCodeAt(0));
+  if (!isPkcs1) return key;
+
+  const der = (tag, value) => {
+    const length = value.length;
+    const size = length < 128
+      ? [length]
+      : (() => {
+        const bytes = [];
+        let remaining = length;
+        while (remaining > 0) {
+          bytes.unshift(remaining & 0xff);
+          remaining >>>= 8;
+        }
+        return [0x80 | bytes.length, ...bytes];
+      })();
+    return new Uint8Array([tag, ...size, ...value]);
+  };
+  const concat = (...parts) => {
+    const output = new Uint8Array(parts.reduce((size, part) => size + part.length, 0));
+    let offset = 0;
+    for (const part of parts) {
+      output.set(part, offset);
+      offset += part.length;
+    }
+    return output;
+  };
+  const version = new Uint8Array([0x02, 0x01, 0x00]);
+  const rsaEncryption = new Uint8Array([
+    0x30, 0x0d, 0x06, 0x09, 0x2a, 0x86, 0x48, 0x86, 0xf7, 0x0d, 0x01, 0x01, 0x01, 0x05, 0x00,
+  ]);
+  return der(0x30, concat(version, rsaEncryption, der(0x04, key)));
+}
+
+async function createAppJwt(env) {
+  if (!env.OPENREVIEW_APP_ID || !env.OPENREVIEW_APP_PRIVATE_KEY) {
+    throw new Error('OpenReview GitHub App credentials are not configured');
+  }
+  const key = await crypto.subtle.importKey(
+    'pkcs8',
+    pemBytes(env.OPENREVIEW_APP_PRIVATE_KEY),
+    { name: 'RSASSA-PKCS1-v1_5', hash: 'SHA-256' },
+    false,
+    ['sign'],
+  );
+  const now = Math.floor(Date.now() / 1000);
+  const header = base64Url(new TextEncoder().encode(JSON.stringify({ alg: 'RS256', typ: 'JWT' })));
+  const claims = base64Url(new TextEncoder().encode(JSON.stringify({
+    iat: now - 30,
+    exp: now + 540,
+    iss: env.OPENREVIEW_APP_ID,
+  })));
+  const unsigned = `${header}.${claims}`;
+  const signature = await crypto.subtle.sign('RSASSA-PKCS1-v1_5', key, new TextEncoder().encode(unsigned));
+  return `${unsigned}.${base64Url(new Uint8Array(signature))}`;
 }
 
 async function dispatchReview(payload, deliveryId, env) {
-  if (!env.DISPATCH_TOKEN || !env.OPENREVIEW_OWNER || !env.OPENREVIEW_REPO) {
-    throw new Error('OpenReview dispatch token and repository settings are not configured');
+  if (!env.OPENREVIEW_OWNER || !env.OPENREVIEW_REPO) {
+    throw new Error('OpenReview repository settings are not configured');
   }
   const repo = payload.repository && payload.repository.full_name;
   if (!repo) throw new Error('Webhook is missing repository data');
@@ -49,9 +117,21 @@ async function dispatchReview(payload, deliveryId, env) {
   const baseSha = payload.pull_request && payload.pull_request.base && payload.pull_request.base.sha;
   const headSha = payload.pull_request && payload.pull_request.head && payload.pull_request.head.sha;
 
+  const installationId = payload.installation && payload.installation.id;
+  if (!installationId) throw new Error('Webhook is missing the GitHub App installation');
+  const appJwt = await createAppJwt(env);
+  const installation = await githubRequest(`${API_ROOT}/app/installations/${installationId}/access_tokens`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${appJwt}`, 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      repositories: [env.OPENREVIEW_REPO],
+      permissions: { contents: 'write' },
+    }),
+  });
+
   return githubRequest(`${API_ROOT}/repos/${env.OPENREVIEW_OWNER}/${env.OPENREVIEW_REPO}/dispatches`, {
     method: 'POST',
-    headers: { Authorization: `Bearer ${env.DISPATCH_TOKEN}`, 'Content-Type': 'application/json' },
+    headers: { Authorization: `Bearer ${installation.token}`, 'Content-Type': 'application/json' },
     body: JSON.stringify({
       event_type: 'openreview_review',
       client_payload: {
