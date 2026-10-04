@@ -43,7 +43,7 @@ function loadConfig(overrides = {}, env = process.env) {
 
   const provider = str(get('provider', ['REVIEW_PROVIDER'], 'openai-compatible')).toLowerCase();
   const model = str(get('model', ['REVIEW_MODEL', 'INPUT_MODEL'], 'gpt-4o-mini'));
-  const baseUrl = str(get('base-url', ['OPENAI_BASE_URL'], 'https://api.openai.com/v1'));
+  const baseUrl = str(get('base-url', ['REVIEW_BASE_URL', 'OPENAI_BASE_URL'], 'https://api.openai.com/v1'));
   const base = str(get('base', ['REVIEW_BASE', 'BASE_SHA', 'GITHUB_BASE_REF'], ''));
   const head = str(get('head', ['REVIEW_HEAD', 'HEAD_SHA', 'GITHUB_SHA'], ''));
   const event = str(get('review-event', [], 'COMMENT')).toUpperCase();
