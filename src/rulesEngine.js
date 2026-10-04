@@ -202,6 +202,8 @@ function validateRule(raw, seenIds) {
   } catch (e) {
     return fail(`rule ${id}: invalid regex ${JSON.stringify(pattern)}: ${e.message}`);
   }
+  const multiline = raw.multiline === true;
+  const multilineRe = multiline ? new RegExp(pattern, `${flags}g`) : null;
   const message = raw.message === undefined || raw.message === null ? '' : String(raw.message).trim();
   if (!message) return fail(`rule ${id}: missing required "message"`);
   seenIds.add(id);
@@ -213,10 +215,11 @@ function validateRule(raw, seenIds) {
       files: files.map((f) => f.trim()),
       pattern,
       flags,
-      multiline: raw.multiline === true,
+      multiline,
       message,
       suggestion: raw.suggestion === undefined || raw.suggestion === null ? '' : String(raw.suggestion),
       _re: re,
+      _multilineRe: multilineRe,
     },
     error: null,
   };
@@ -293,8 +296,8 @@ function scanDiff(diffResult, rules) {
       const addedLines = (hunk.lines || []).filter((line) => line && line.type === 'add');
       const addedText = addedLines.map((line) => line.content).join('\n');
       for (const r of applicable.filter((rule) => rule.multiline)) {
-        const pattern = new RegExp(r.pattern, `${r.flags}g`);
-        for (const match of addedText.matchAll(pattern)) {
+        r._multilineRe.lastIndex = 0;
+        for (const match of addedText.matchAll(r._multilineRe)) {
           const beforeMatch = addedText.slice(0, match.index);
           const addedLineIndex = beforeMatch.split('\n').length - 1;
           const line = addedLines[addedLineIndex];
@@ -309,6 +312,7 @@ function scanDiff(diffResult, rules) {
             });
           }
         }
+        r._multilineRe.lastIndex = 0;
       }
       for (const l of hunk.lines || []) {
         if (!l || l.type !== 'add') continue;
