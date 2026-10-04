@@ -31,14 +31,37 @@ Zero npm dependencies. Runs on GitHub Actions with Node 20.
 
 ## Quick start
 
-1. Copy `.github/workflows/pr-review.yml` into your repo.
-2. Add the secret `REVIEW_PROVIDER_API_KEY` (Settings → Secrets → Actions).
-   Optional: repo variables `REVIEW_PROVIDER` (default `openai-compatible`),
-   `REVIEW_MODEL` (default `gpt-4o-mini`), `REVIEW_BASE_URL`.
-3. Open a PR. The bot comments "Starting review…" style progress via the
-   updating summary comment, then the full review.
-4. Push a commit to the PR: only the new commits get reviewed and the same
-   summary comment is updated.
+1. Add this single workflow file to the repository you want reviewed at
+   `.github/workflows/openreview.yml`:
+
+   ```yaml
+   name: OpenReview
+   on:
+     pull_request:
+       types: [opened, synchronize, reopened, ready_for_review]
+     issue_comment:
+       types: [created]
+   permissions:
+     contents: read
+     pull-requests: write
+   jobs:
+     review:
+       uses: danieldamilola/Openreview/.github/workflows/reusable-review.yml@main
+       secrets: inherit
+   ```
+
+2. In that repository's **Settings → Secrets and variables → Actions**, add
+   `REVIEW_PROVIDER_API_KEY` as a secret. For Gemini, add variables
+   `REVIEW_PROVIDER=openai-compatible`,
+   `REVIEW_BASE_URL=https://generativelanguage.googleapis.com/v1beta/openai/`,
+   and `REVIEW_MODEL=gemini-3.5-flash-lite`.
+3. Open a PR to trigger a review. Pushes to it trigger incremental reviews;
+   comment `/review` to request a fresh full review.
+
+The reusable workflow checks out the review engine automatically. You do not
+need to copy the `src/`, `scripts/`, or `rules/` directories into the target
+repository. The original `pr-review.yml` remains available for running the
+engine directly inside this repository.
 
 ## Providers
 
