@@ -1,0 +1,45 @@
+# C# deterministic rules. severity: critical | major | minor.
+
+rules:
+  - id: cs-async-void
+    description: "async void cannot be awaited; exceptions crash the process"
+    severity: major
+    files:
+      - "**/*.cs"
+    pattern: "async\\s+void\\b"
+    message: "async void cannot be awaited and crashes on exception; only valid for event handlers."
+    suggestion: "Use async Task instead, unless this is an event handler."
+
+  - id: cs-blocking-result
+    description: "Blocking on Task with .Result / .Wait() can deadlock"
+    severity: major
+    files:
+      - "**/*.cs"
+    pattern: "\\.(Result|Wait\\(\\))\\b"
+    message: "Blocking on a Task with .Result/.Wait() risks deadlocks in async contexts."
+    suggestion: "Await the task instead."
+
+  - id: cs-empty-catch
+    description: "Swallowed exceptions hide failures"
+    severity: major
+    files:
+      - "**/*.cs"
+    pattern: "catch\\s*(\\([^)]*\\))?\\s*\\{\\s*\\}"
+    message: "Empty catch block silently swallows exceptions."
+    suggestion: "Log the exception or handle it explicitly."
+
+  - id: cs-console-writeline
+    description: "Console output left in shipped code"
+    severity: minor
+    files:
+      - "**/*.cs"
+    pattern: "Console\\.(WriteLine|Write)\\s*\\("
+    message: "Console.WriteLine left in code; use the app logger instead."
+
+  - id: cs-thread-sleep
+    description: "Thread.Sleep blocks a thread-pool thread"
+    severity: minor
+    files:
+      - "**/*.cs"
+    pattern: "Thread\\.Sleep\\s*\\("
+    message: "Thread.Sleep blocks a thread; prefer await Task.Delay in async code."

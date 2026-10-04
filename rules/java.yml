@@ -1,0 +1,27 @@
+# Java deterministic rules. severity: critical | major | minor.
+
+rules:
+  - id: java-runtime-exec
+    description: "Runtime.exec with dynamic input is command injection"
+    severity: critical
+    files:
+      - "**/*.java"
+    pattern: "Runtime\\.getRuntime\\(\\)\\.exec\\s*\\("
+    message: "Runtime.exec() with unsanitized input is command injection."
+    suggestion: "Use ProcessBuilder with an argument list and validate inputs."
+
+  - id: java-system-out
+    description: "System.out output left in code"
+    severity: minor
+    files:
+      - "**/*.java"
+    pattern: "System\\.(out|err)\\.print"
+    message: "System.out/err output left in code; use the app logger instead."
+
+  - id: java-print-stacktrace
+    description: "printStackTrace writes to stderr with no context"
+    severity: minor
+    files:
+      - "**/*.java"
+    pattern: "\\.printStackTrace\\s*\\("
+    message: "printStackTrace() loses log context; log the exception with the app logger."

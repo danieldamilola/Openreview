@@ -1,0 +1,108 @@
+name: pr-review
+
+# Triggers: automatic review on PR lifecycle events, plus a slash command for
+# manual re-review. The engine entry point is src/index.js and is responsible
+# for calling scripts/post-review.js and scripts/incremental.js.
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, ready_for_review]
+  issue_comment:
+    types: [created]
+
+permissions:
+  contents: read
+  pull-requests: write
+
+jobs:
+  review:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          # Full history so scripts/incremental.js can diff priorHead...head
+          # locally; it falls back to the compare API when objects are missing.
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run review engine
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+          GITHUB_API_URL: ${{ github.api_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          BASE_SHA: ${{ github.event.pull_request.base.sha }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+          REVIEW_PROVIDER: ${{ vars.REVIEW_PROVIDER || 'openai-compatible' }}
+          REVIEW_MODEL: ${{ vars.REVIEW_MODEL }}
+          REVIEW_BASE_URL: ${{ vars.REVIEW_BASE_URL }}
+          REVIEW_PROVIDER_API_KEY: ${{ secrets.REVIEW_PROVIDER_API_KEY }}
+          REVIEW_INLINE: ${{ vars.REVIEW_INLINE || 'true' }}
+        run: node src/index.js
+
+  review-command:
+    if: >-
+      github.event_name == 'issue_comment' &&
+      github.event.issue.pull_request != null &&
+      contains(github.event.comment.body, '/review')
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: write
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Run review engine
+        env:
+          GITHUB_TOKEN: ${{ secrets.GH_TOKEN || github.token }}
+          GITHUB_API_URL: ${{ github.api_url }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.issue.number }}
+          # base/head are unknown for issue_comment; the engine resolves them
+          # from the pulls API and forces a fresh review.
+          BASE_SHA: ''
+          HEAD_SHA: ''
+          REVIEW_FORCE: 'true'
+          REVIEW_PROVIDER: ${{ vars.REVIEW_PROVIDER || 'openai-compatible' }}
+          REVIEW_MODEL: ${{ vars.REVIEW_MODEL }}
+          REVIEW_BASE_URL: ${{ vars.REVIEW_BASE_URL }}
+          REVIEW_PROVIDER_API_KEY: ${{ secrets.REVIEW_PROVIDER_API_KEY }}
+          REVIEW_INLINE: ${{ vars.REVIEW_INLINE || 'true' }}
+        run: node src/index.js
+
+# ---------------------------------------------------------------------------
+# Required secrets (documented in scripts/README.md)
+#   GH_TOKEN                 optional PAT / GitHub App token; falls back to the
+#                            automatic GITHUB_TOKEN.
+#   REVIEW_PROVIDER_API_KEY  provider API key (e.g. OPENAI_API_KEY style key
+#                            for the configured base URL). Always required for
+#                            the default openai-compatible provider. To use the
+#                            opencode CLI instead, set REVIEW_PROVIDER=opencode
+#                            with REVIEW_MODEL like opencode/gpt-5 and install
+#                            opencode on the runner.
+#
+# Fork safety
+#   `pull_request` from a fork gets a read-only GITHUB_TOKEN and cannot comment.
+#   To review fork PRs use `pull_request_target` (write token, base repo) but
+#   NEVER check out or execute the untrusted head ref there. scripts/*.js only
+#   read diffs via the compare API and call the API, so they are safe under
+#   pull_request_target. Never combine pull_request_target with a checkout of
+#   github.event.pull_request.head.sha followed by running PR code.
+# ---------------------------------------------------------------------------

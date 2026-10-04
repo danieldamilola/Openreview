@@ -1,0 +1,27 @@
+# Go deterministic rules. severity: critical | major | minor.
+
+rules:
+  - id: go-panic-call
+    description: "panic() crashes the goroutine; libraries must not panic"
+    severity: major
+    files:
+      - "**/*.go"
+    pattern: "\\bpanic\\s*\\("
+    message: "panic() crashes the goroutine; return an error for recoverable failures."
+    suggestion: "Return error values instead, especially in library code."
+
+  - id: go-fmt-print
+    description: "fmt.Print* output left in code"
+    severity: minor
+    files:
+      - "**/*.go"
+    pattern: "fmt\\.(Print|Printf|Println)\\s*\\("
+    message: "fmt.Print* output left in code; use the app logger instead."
+
+  - id: go-time-sleep-handler
+    description: "time.Sleep in request paths stalls goroutines"
+    severity: minor
+    files:
+      - "**/*.go"
+    pattern: "time\\.Sleep\\s*\\("
+    message: "time.Sleep blocks a goroutine; make sure it is intentional (backoff, not request handling)."

@@ -1,0 +1,20 @@
+# Python deterministic rules. severity: critical | major | minor.
+
+rules:
+  - id: py-dangerous-exec
+    description: "exec()/eval() on dynamic input is code injection"
+    severity: major
+    files:
+      - "**/*.py"
+    pattern: "\\b(exec|eval)\\s*\\("
+    message: "exec()/eval() can execute arbitrary code; avoid on dynamic input."
+    suggestion: "Use ast.literal_eval or a dispatch table instead."
+
+  - id: py-pickle-loads
+    description: "Unpickling untrusted data executes arbitrary code"
+    severity: major
+    files:
+      - "**/*.py"
+    pattern: "pickle\\.(loads|load)\\s*\\("
+    message: "pickle.load(s) on untrusted data is remote code execution."
+    suggestion: "Use json or another safe serialization format."

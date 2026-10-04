@@ -1,0 +1,54 @@
+# JavaScript / TypeScript deterministic rules.
+# Copy, delete, or extend freely. severity: critical | major | minor.
+
+rules:
+  - id: no-eval
+    description: "eval() enables arbitrary code execution"
+    severity: critical
+    files:
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.mjs"
+      - "**/*.cjs"
+    pattern: "\\beval\\s*\\("
+    message: "Avoid eval(): it executes arbitrary code and is a security risk."
+    suggestion: "Refactor to a safe alternative (lookup table, JSON.parse, Function-free design)."
+
+  - id: no-focused-tests
+    description: "Focused test modifiers (.only) silently skip the rest of the suite"
+    severity: major
+    files:
+      - "**/*.test.js"
+      - "**/*.test.ts"
+      - "**/*.spec.js"
+      - "**/*.spec.ts"
+    pattern: "\\.(only|skip)\\s*\\("
+    message: "Focused/skipped test modifier committed: the suite will not run fully in CI."
+    suggestion: "Remove .only / .skip before merging."
+
+  - id: no-debugger
+    description: "Leftover debugger statement halts execution in devtools"
+    severity: minor
+    files:
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.ts"
+      - "**/*.tsx"
+    pattern: "^\\s*debugger\\b"
+    message: "Remove the debugger statement before merging."
+
+  - id: no-console-log
+    description: "Console output left in shipped code"
+    severity: minor
+    files:
+      - "**/*.js"
+      - "**/*.jsx"
+      - "**/*.ts"
+      - "**/*.tsx"
+      - "**/*.mjs"
+      - "**/*.cjs"
+    pattern: "console\\.(log|debug|info)\\s*\\("
+    message: "Console output left in code; it pollutes production logs."
+    suggestion: "Use the repo logger, or remove it."

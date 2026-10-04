@@ -1,0 +1,52 @@
+# React / React Native deterministic rules (JS + TS files).
+# Base JS hygiene (console, eval, focused tests) lives in javascript.yml.
+# severity: critical | major | minor.
+
+rules:
+  - id: react-dangerous-html
+    description: "dangerouslySetInnerHTML is an XSS sink"
+    severity: critical
+    files:
+      - "**/*.jsx"
+      - "**/*.tsx"
+      - "**/*.js"
+      - "**/*.ts"
+    pattern: "dangerouslySetInnerHTML"
+    message: "dangerouslySetInnerHTML with unsanitized data is XSS."
+    suggestion: "Sanitize the HTML first, or render it as structured components."
+
+  - id: react-deprecated-lifecycle
+    description: "Legacy unsafe lifecycle methods are deprecated"
+    severity: major
+    files:
+      - "**/*.jsx"
+      - "**/*.tsx"
+      - "**/*.js"
+      - "**/*.ts"
+    pattern: "component(WillMount|WillReceiveProps|WillUpdate)\\s*\\("
+    message: "Deprecated unsafe lifecycle method; it breaks under async rendering."
+    suggestion: "Migrate to componentDidMount / getDerivedStateFromProps / hooks."
+
+  - id: rn-asyncstorage-token
+    description: "Auth tokens in AsyncStorage are readable on rooted devices"
+    severity: major
+    files:
+      - "**/*.jsx"
+      - "**/*.tsx"
+      - "**/*.js"
+      - "**/*.ts"
+    pattern: "AsyncStorage\\.setItem\\s*\\([^)]*[Tt]oken"
+    message: "Storing auth tokens in AsyncStorage is insecure on rooted/jailbroken devices."
+    suggestion: "Use expo-secure-store, react-native-keychain, or EncryptedStorage."
+
+  - id: rn-ignore-all-logs
+    description: "Suppressing all LogBox warnings hides real problems"
+    severity: minor
+    files:
+      - "**/*.jsx"
+      - "**/*.tsx"
+      - "**/*.js"
+      - "**/*.ts"
+    pattern: "LogBox\\.ignoreAllLogs\\s*\\("
+    message: "ignoreAllLogs() hides every warning, including real ones."
+    suggestion: "Ignore only specific known warnings via LogBox.ignoreLogs([...])."

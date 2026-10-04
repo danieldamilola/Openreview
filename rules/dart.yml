@@ -1,0 +1,27 @@
+# Dart / Flutter deterministic rules. severity: critical | major | minor.
+
+rules:
+  - id: dart-print
+    description: "print() output is dropped in release builds; use debugPrint"
+    severity: minor
+    files:
+      - "**/*.dart"
+    pattern: "\\bprint\\s*\\("
+    message: "print() is dropped in release builds and pollutes logs."
+    suggestion: "Use debugPrint() or the logging package instead."
+
+  - id: dart-debugger-stmt
+    description: "debugger() statement halts execution when debugging"
+    severity: minor
+    files:
+      - "**/*.dart"
+    pattern: "^\\s*debugger\\s*\\("
+    message: "Remove the debugger() statement before merging."
+
+  - id: dart-todo-throw
+    description: "UnimplementedError placeholder will throw at runtime"
+    severity: minor
+    files:
+      - "**/*.dart"
+    pattern: "throw\\s+UnimplementedError\\s*\\("
+    message: "UnimplementedError placeholder will throw at runtime if reached."

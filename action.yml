@@ -1,0 +1,85 @@
+name: 'OpenReview'
+description: 'CodeRabbit-style PR review engine. Node.js (plain JavaScript, zero dependencies). Triggers on pull_request opened + synchronize with full or incremental diffs.'
+branding:
+  icon: 'eye'
+  color: 'blue'
+inputs:
+  github-token:
+    description: 'GitHub token for posting reviews (secrets.GITHUB_TOKEN)'
+    required: true
+  provider:
+    description: "LLM backend: 'opencode' (opencode CLI) or 'openai-compatible'"
+    required: false
+    default: 'openai-compatible'
+  model:
+    description: "Model string, e.g. 'gpt-4o-mini', 'openai:gpt-4o-mini', or 'opencode:opencode/gpt-5'. Selectable via input or REVIEW_MODEL env."
+    required: false
+    default: 'gpt-4o-mini'
+  base-url:
+    description: 'Base URL for the OpenAI-compatible endpoint'
+    required: false
+    default: 'https://api.openai.com/v1'
+  base:
+    description: 'Base SHA (PR base, or prior reviewed head for incremental review)'
+    required: false
+    default: ''
+  head:
+    description: 'Head SHA (PR head commit)'
+    required: false
+    default: ''
+  ignore-patterns:
+    description: "Comma/newline-separated globs to skip (e.g. '**/*.lock,dist/')"
+    required: false
+    default: ''
+  focus:
+    description: 'Review focus override'
+    required: false
+    default: ''
+  extra-rules:
+    description: 'Extra repo rules appended to the prompt'
+    required: false
+    default: ''
+  review-event:
+    description: 'Review event: COMMENT, APPROVE, or REQUEST_CHANGES'
+    required: false
+    default: 'COMMENT'
+  severity-threshold:
+    description: 'Lowest severity to post: critical, major, or minor (style nits are never reported)'
+    required: false
+    default: 'minor'
+  max-comments:
+    description: 'Max inline findings posted per review (most severe first)'
+    required: false
+    default: '15'
+  rules-enabled:
+    description: 'Run deterministic pattern rules from rules-dir before the LLM step'
+    required: false
+    default: 'true'
+  rules-dir:
+    description: 'Directory of YAML rule files, relative to the repository root'
+    required: false
+    default: 'rules'
+  max-files:
+    description: 'Max files sent to the model'
+    required: false
+    default: '100'
+  max-file-chars:
+    description: 'Max characters per file before truncation'
+    required: false
+    default: '20000'
+  max-total-chars:
+    description: 'Max characters per LLM request (chunking budget)'
+    required: false
+    default: '120000'
+  max-hunk-lines:
+    description: 'Max diff lines kept per hunk'
+    required: false
+    default: '300'
+outputs:
+  summary:
+    description: 'GitHub markdown review summary'
+  findings-json:
+    description: 'JSON array of structured findings'
+runs:
+  using: 'node20'
+  main: 'src/index.js'

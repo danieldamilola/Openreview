@@ -1,0 +1,59 @@
+# OpenReview sample configuration.
+# Copy to .openreview.yml at your repo root and adjust. Every key is optional.
+# Action inputs and REVIEW_* env vars override these values.
+
+# LLM backend: "openai-compatible" (default) or "opencode" (opencode CLI).
+provider: openai-compatible
+
+# Model string. Any model your provider serves, e.g. gpt-4o-mini.
+# For opencode: "opencode/gpt-5", "anthropic/claude-sonnet-4-5", ...
+model: gpt-4o-mini
+
+# Base URL for OpenAI-compatible endpoints (OpenAI, Azure, Groq, Ollama, ...).
+baseUrl: https://api.openai.com/v1
+
+# What to focus on: security, logic, performance, style.
+focus: security, logic, best-practices
+
+# Extra repo rules appended to the review prompt.
+extraRules: ""
+
+# Review event for inline comments: COMMENT, APPROVE, or REQUEST_CHANGES.
+reviewEvent: COMMENT
+
+# Severity threshold: critical, major, or minor. Findings below it are hidden.
+# Style nits are never reported at all. Default: minor (show everything).
+severityThreshold: minor
+
+# Glob patterns to skip (docs, lockfiles, generated code, ...).
+ignorePatterns:
+  - "**/*.md"
+  - "**/*.lock"
+  - "dist/**"
+  - "package-lock.json"
+
+# Cap inline comments per review.
+maxComments: 15
+
+# Diff size budgets (chars/files) before truncation kicks in.
+limits:
+  maxFiles: 100
+  maxFileChars: 20000
+  maxTotalChars: 120000
+  maxHunkLines: 300
+
+# Deterministic pattern rules (CodeRabbit ast-grep-style layer).
+# Exact regex/glob matches over the diff, before the LLM step.
+rules:
+  enabled: true
+  dir: rules
+
+# Comment mode: "update" edits one summary comment (default),
+# "create" posts a new comment on every run.
+commentMode: update
+
+# Opt-out marker: a PR whose body contains this string is never reviewed.
+optOutMarker: /no-bot-review
+
+# Manual re-review command on issue comments.
+reviewCommand: /review

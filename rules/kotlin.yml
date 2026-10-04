@@ -1,0 +1,36 @@
+# Kotlin deterministic rules. severity: critical | major | minor.
+
+rules:
+  - id: kt-not-null-assertion
+    description: "The !! operator throws NullPointerException on null"
+    severity: major
+    files:
+      - "**/*.kt"
+    pattern: "!!"
+    message: "The !! operator throws NPE on null; prefer safe calls, Elvis, or requireNotNull with context."
+    suggestion: "Replace with ?. / ?: or an explicit null check."
+
+  - id: kt-globalscope
+    description: "GlobalScope.launch is unstructured and leaks coroutines"
+    severity: major
+    files:
+      - "**/*.kt"
+    pattern: "GlobalScope\\.(launch|async)\\s*"
+    message: "GlobalScope coroutines are unstructured and can leak; scope them to a lifecycle."
+    suggestion: "Use viewModelScope, lifecycleScope, or an injected CoroutineScope."
+
+  - id: kt-todo-call
+    description: "TODO() throws NotImplementedError at runtime"
+    severity: minor
+    files:
+      - "**/*.kt"
+    pattern: "\\bTODO\\s*\\("
+    message: "TODO() throws at runtime if reached; track it or implement it."
+
+  - id: kt-println
+    description: "println left in code; use a logger"
+    severity: minor
+    files:
+      - "**/*.kt"
+    pattern: "\\bprintln\\s*\\("
+    message: "println() left in code; use the app logger instead."

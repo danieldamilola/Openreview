@@ -1,0 +1,24 @@
+# Language-agnostic secret / credential rules. Run on every file type.
+# severity: critical | major | minor.
+
+rules:
+  - id: secret-aws-key
+    description: "Hardcoded AWS access key ID"
+    severity: critical
+    pattern: "AKIA[0-9A-Z]{16}"
+    message: "Possible hardcoded AWS access key. Rotate it and move it to secrets."
+    suggestion: "Use environment variables or a secrets manager."
+
+  - id: secret-private-key
+    description: "Committed private key block"
+    severity: critical
+    pattern: "-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----"
+    message: "Private key material committed to the repo. Rotate the key immediately."
+
+  - id: secret-assignment
+    description: "Possible hardcoded password / secret / token"
+    severity: major
+    pattern: "(password|passwd|secret|api[_-]?key)\\s*[:=]\\s*[\"'][^\"']+[\"']"
+    flags: "i"
+    message: "Possible hardcoded credential; move it out of source code."
+    suggestion: "Use environment variables or a secrets manager."

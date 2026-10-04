@@ -1,0 +1,36 @@
+# Rust deterministic rules. severity: critical | major | minor.
+
+rules:
+  - id: rs-panic-macro
+    description: "panic! crashes the thread; not for recoverable errors"
+    severity: major
+    files:
+      - "**/*.rs"
+    pattern: "\\bpanic!\\s*\\("
+    message: "panic! crashes the thread; use Result-based error handling for recoverable errors."
+    suggestion: "Return Result/Option instead, or justify with a comment."
+
+  - id: rs-unwrap
+    description: "unwrap() panics on Err/None"
+    severity: minor
+    files:
+      - "**/*.rs"
+    pattern: "\\.unwrap\\(\\)"
+    message: "unwrap() panics on failure; acceptable in tests/examples, risky in production paths."
+    suggestion: "Use expect() with context, or propagate with ?."
+
+  - id: rs-todo-unimplemented
+    description: "todo!/unimplemented! placeholders panic at runtime"
+    severity: major
+    files:
+      - "**/*.rs"
+    pattern: "\\b(todo|unimplemented)!\\s*\\("
+    message: "todo!/unimplemented! placeholder will panic at runtime if reached."
+
+  - id: rs-dbg-print
+    description: "Debug output left in code"
+    severity: minor
+    files:
+      - "**/*.rs"
+    pattern: "\\b(dbg!|println!)\\s*\\("
+    message: "dbg!/println! debug output left in code; remove it or use the log crate."
