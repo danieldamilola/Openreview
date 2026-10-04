@@ -56,7 +56,7 @@ async function main() {
     });
     rawDiff = env.REVIEW_DIFF;
   } else {
-    if (!config.base || !config.head) {
+    if ((!config.base || !config.head) && !canPost) {
       throw new Error('Missing base/head: set `base` and `head` inputs (or REVIEW_BASE/REVIEW_HEAD).');
     }
     if (canPost) {
