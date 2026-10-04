@@ -15,13 +15,15 @@ npx wrangler@4 login
 npx wrangler@4 deploy
 ```
 
-Cloudflare prints the Worker URL after deployment. The GitHub webhook URL will
-be that URL followed by `/webhook`.
+Cloudflare prints the Worker URL after deployment. With the current name, it
+will be `https://openreview0.openreview0.workers.dev`; the GitHub webhook URL
+will be that URL followed by `/webhook`.
 
 ## 2. Register the GitHub App
 
 In GitHub, open **Settings → Developer settings → GitHub Apps → New GitHub
-App**. Set the name to `OpenReview`, add the project URL, and upload the logo.
+App**. Set the name to `OpenReview`, add the project URL, and upload
+`assets/openreview0-app-icon.png` as its logo.
 Use the Worker URL plus `/webhook` for the webhook URL. Choose a strong random
 webhook secret and keep it for the next step.
 

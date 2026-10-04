@@ -1,4 +1,8 @@
-# OpenReview — CodeRabbit-style AI PR review bot
+<p align="center">
+  <img src="assets/openreview0-app-icon.png" width="112" alt="OpenReview logo">
+</p>
+
+# OpenReview
 
 OpenReview reviews your pull requests automatically — on every new PR and on
 every new commit pushed to it — much like CodeRabbit. It posts one updating
