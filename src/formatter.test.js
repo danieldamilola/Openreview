@@ -19,7 +19,7 @@ describe('formatter', () => {
   it('counts severities and renders markdown summary', () => {
     assert.deepEqual(countBySeverity(FINDINGS), { critical: 1, major: 1, minor: 1 });
     const md = formatSummary({ findings: FINDINGS, stats: { files: 2, additions: 10, deletions: 1 } });
-    assert.match(md, /## Code Review/);
+    assert.match(md, /## OpenReview code review/);
     assert.match(md, /Found \*\*3\*\* issue/);
     assert.match(md, /`a\.js`/);
     assert.match(md, /critical/);
@@ -27,7 +27,7 @@ describe('formatter', () => {
 
   it('renders empty state for clean diffs', () => {
     const md = formatSummary({ findings: [] });
-    assert.match(md, /No issues found/);
+    assert.match(md, /No actionable findings/);
   });
 
   it('emits RIGHT-side inline comments sorted by severity', () => {
@@ -35,7 +35,7 @@ describe('formatter', () => {
     assert.equal(comments.length, 3);
     assert.equal(comments[0].path, 'a.js'); // critical first
     assert.equal(comments[0].side, 'RIGHT');
-    assert.match(comments[0].body, /critical/);
+    assert.match(comments[0].body, /Critical/);
   });
 
   it('builds a full review payload', () => {
@@ -43,6 +43,6 @@ describe('formatter', () => {
     assert.equal(p.event, 'COMMENT');
     assert.equal(p.commit_id, 'abc');
     assert.equal(p.comments.length, 3);
-    assert.match(p.body, /## Code Review/);
+    assert.match(p.body, /## OpenReview code review/);
   });
 });

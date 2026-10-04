@@ -86,7 +86,7 @@ function formatSummary({ findings = [], stats = {}, config = {}, dropped = [], s
   const counts = countBySeverity(findings);
   const total = findings.length;
   const lines = [];
-  lines.push('## OpenReview review');
+  lines.push('## OpenReview code review');
   lines.push('');
   if (total === 0) {
     lines.push('No actionable findings on the changed lines.');
