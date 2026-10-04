@@ -20,7 +20,7 @@
 
 const { spawnSync } = require('node:child_process');
 
-const ENV_KEYS_OPENAI = ['OPENAI_API_KEY', 'REVIEW_API_KEY', 'INPUT_API_KEY'];
+const ENV_KEYS_OPENAI = ['REVIEW_PROVIDER_API_KEY', 'OPENAI_API_KEY', 'REVIEW_API_KEY', 'INPUT_API_KEY'];
 const ENV_KEYS_OPENCODE = ['OPENCODE_API_KEY', 'OPENAI_API_KEY', 'REVIEW_API_KEY'];
 
 function readEnvKey(env, names) {
