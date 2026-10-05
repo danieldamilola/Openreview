@@ -78,8 +78,8 @@ out of chat and source files.
 In the GitHub App settings, choose **Install App**. Select OpenReview and the
 repositories you want it to review, or choose all repositories. OpenReview
 must be selected so the Worker can dispatch review jobs there. Pull requests
-and new commits will trigger reviews. Comment `/review` on a PR to request a
-fresh review.
+and new commits will trigger reviews. Comment `@openview0 review` on a PR to
+request a fresh review. `/review` also works for collaborators.
 
 The relay runs on Cloudflare Workers. The Free plan currently includes up to
 100,000 requests per day; Gemini API usage has its own quota and pricing.

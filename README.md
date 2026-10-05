@@ -52,7 +52,8 @@ Keys always come from the environment; they are never logged.
 
 ## Manual commands and opt-out
 
-- Comment `/review` on a PR to force a fresh full review.
+- Comment `@openview0 review` on a PR to request a fresh review. `/review`
+  also works for collaborators.
 - Put `/no-bot-review` in the PR body to skip automatic reviews
   (enforced when you add the `contains(...]` guard from the example, or via
   `.openreview.yml` `optOutMarker` convention in your own workflow).

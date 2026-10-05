@@ -155,6 +155,11 @@ function response(body, status = 200) {
   });
 }
 
+function isReviewCommand(body) {
+  const text = String(body || '');
+  return /\/review\b/i.test(text) || /@openview0\s+review\b/i.test(text);
+}
+
 export default {
   async fetch(request, env) {
     const url = new URL(request.url);
@@ -181,7 +186,7 @@ export default {
         return response({ ignored: true });
       }
     } else if (event === 'issue_comment') {
-      if (payload.action !== 'created' || !payload.issue?.pull_request || !String(payload.comment?.body || '').includes('/review')) {
+      if (payload.action !== 'created' || !payload.issue?.pull_request || !isReviewCommand(payload.comment?.body)) {
         return response({ ignored: true });
       }
       if (!['OWNER', 'MEMBER', 'COLLABORATOR'].includes(payload.comment?.author_association)) {
