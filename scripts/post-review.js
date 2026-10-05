@@ -46,7 +46,7 @@ async function githubFetch(method, path, options = {}) {
   }
   if (!response.ok) {
     const message = data && data.message ? data.message : text || `HTTP ${response.status}`;
-    const err = new Error(`[DEBUG-endpoint-b922] ${method} ${path} -> GitHub API ${response.status}: ${message}`);
+    const err = new Error(`GitHub API ${response.status}: ${message}`);
     err.status = response.status;
     throw err;
   }
