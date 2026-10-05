@@ -23,6 +23,8 @@ const FINDING_JSON_SCHEMA = {
           file: { type: 'string', description: 'Repo-relative path, must match a reviewed file' },
           line: { type: 'integer', description: 'New-side line number; must be an added (+) line' },
           severity: { type: 'string', enum: SEVERITIES },
+          title: { type: 'string', description: 'Short, specific finding headline' },
+          category: { type: 'string', description: 'One of Correctness, Security, Stability & Availability, Performance, Maintainability' },
           message: { type: 'string', description: 'Concise problem statement' },
           suggestion: { type: 'string', description: 'Concrete fix or code snippet (optional)' },
           rule: { type: 'string', description: 'Short rule/category tag (optional)' },
@@ -45,11 +47,13 @@ const SYSTEM_PROMPT = [
   'Do NOT report style nits, typos, formatting, or naming preferences.',
   'Only report substantive issues: bugs, security holes, crashes, data loss,',
   'correctness risks, bad error handling, and real maintainability problems.',
+  'For every finding, include a short title and one category: Correctness, Security, Stability & Availability, Performance, or Maintainability.',
+  'Keep the title specific and brief. Put evidence and impact in the message, and a concrete fix in suggestion when useful.',
   'Write findings in plain, direct language. State the concrete problem and its effect, then give a specific fix when useful.',
   'Keep messages concise. Use active voice, ordinary words, and a calm, respectful tone.',
   'Avoid filler, praise, promotional language, generic conclusions, and claims the diff does not support.',
   'Do not nitpick wording, style, naming, or formatting. Do not use emojis or conversational sign-offs.',
-  'Output STRICT JSON only: {"findings":[{file,line,severity,message,suggestion?,rule?}]}.',
+  'Output STRICT JSON only: {"findings":[{file,line,severity,title,category,message,suggestion?,rule?}]}.',
   'No markdown fences, no prose, no extra keys.',
 ].join('\n');
 
@@ -149,6 +153,8 @@ function validateFindings(findings) {
       isValidSeverity(f.severity) &&
       typeof f.message === 'string' &&
       f.message.trim().length > 0 &&
+      (f.title === undefined || typeof f.title === 'string') &&
+      (f.category === undefined || typeof f.category === 'string') &&
       (f.suggestion === undefined || typeof f.suggestion === 'string') &&
       (f.rule === undefined || typeof f.rule === 'string');
     if (ok) valid.push(f);

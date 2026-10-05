@@ -1,4 +1,8 @@
-# OpenReview — CodeRabbit-style AI PR review bot
+<p align="center">
+  <img src="assets/openreview0-app-icon.png" width="112" alt="OpenReview logo">
+</p>
+
+# OpenReview
 
 OpenReview reviews your pull requests automatically — on every new PR and on
 every new commit pushed to it — much like CodeRabbit. It posts one updating
@@ -31,14 +35,10 @@ Zero npm dependencies. Runs on GitHub Actions with Node 20.
 
 ## Quick start
 
-1. Copy `.github/workflows/pr-review.yml` into your repo.
-2. Add the secret `REVIEW_PROVIDER_API_KEY` (Settings → Secrets → Actions).
-   Optional: repo variables `REVIEW_PROVIDER` (default `openai-compatible`),
-   `REVIEW_MODEL` (default `gpt-4o-mini`), `REVIEW_BASE_URL`.
-3. Open a PR. The bot comments "Starting review…" style progress via the
-   updating summary comment, then the full review.
-4. Push a commit to the PR: only the new commits get reviewed and the same
-   summary comment is updated.
+OpenReview has two modes. The GitHub App mode reviews selected repositories
+without installing a workflow in each one. See `docs/github-app-setup.md` to
+deploy the webhook relay and register the app. The original GitHub Actions
+workflow remains available for running the engine in this repository.
 
 ## Providers
 

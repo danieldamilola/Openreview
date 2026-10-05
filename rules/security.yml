@@ -10,9 +10,10 @@ rules:
     suggestion: "Use environment variables or a secrets manager."
 
   - id: secret-private-key
-    description: "Committed private key block"
+    description: "Committed private key PEM block"
     severity: critical
-    pattern: "-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----"
+    pattern: '-----BEGIN (?:RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----[\r\n]+[A-Za-z0-9+/=\r\n]{128,}[\r\n]+-----END (?:RSA |EC |OPENSSH |ENCRYPTED )?PRIVATE KEY-----'
+    multiline: true
     message: "Private key material committed to the repo. Rotate the key immediately."
 
   - id: secret-assignment

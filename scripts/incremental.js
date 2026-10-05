@@ -130,6 +130,22 @@ async function resolveDiff({
   force = false,
   fetchImpl,
 } = {}) {
+  // issue_comment events do not include pull request SHAs. Resolve them from
+  // the pull request API before planning or requesting a compare diff.
+  if ((!baseSha || !headSha) && token && repo && prNumber) {
+    const { githubFetch } = require('./post-review');
+    const pull = await githubFetch('GET', `/repos/${repo}/pulls/${prNumber}`, {
+      token,
+      apiUrl,
+      fetchImpl,
+    });
+    baseSha = baseSha || (pull && pull.base && pull.base.sha);
+    headSha = headSha || (pull && pull.head && pull.head.sha);
+  }
+  if (!baseSha || !headSha) {
+    throw new Error('Could not resolve pull request base/head commits');
+  }
+
   const lastReviewedSha = await getLastReviewedSha({
     token,
     repo,

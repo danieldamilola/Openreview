@@ -1,0 +1,10 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "openreview-webhook",
+  "main": "cloudflare/worker.js",
+  "compatibility_date": "2026-10-04",
+  "vars": {
+    "OPENREVIEW_OWNER": "danieldamilola",
+    "OPENREVIEW_REPO": "Openreview"
+  }
+}

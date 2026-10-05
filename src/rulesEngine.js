@@ -202,6 +202,8 @@ function validateRule(raw, seenIds) {
   } catch (e) {
     return fail(`rule ${id}: invalid regex ${JSON.stringify(pattern)}: ${e.message}`);
   }
+  const multiline = raw.multiline === true;
+  const multilineRe = multiline ? new RegExp(pattern, `${flags}g`) : null;
   const message = raw.message === undefined || raw.message === null ? '' : String(raw.message).trim();
   if (!message) return fail(`rule ${id}: missing required "message"`);
   seenIds.add(id);
@@ -213,9 +215,11 @@ function validateRule(raw, seenIds) {
       files: files.map((f) => f.trim()),
       pattern,
       flags,
+      multiline,
       message,
       suggestion: raw.suggestion === undefined || raw.suggestion === null ? '' : String(raw.suggestion),
       _re: re,
+      _multilineRe: multilineRe,
     },
     error: null,
   };
@@ -289,9 +293,30 @@ function scanDiff(diffResult, rules) {
     const applicable = (rules || []).filter((r) => matchesAnyGlob(file.file, r.files));
     if (applicable.length === 0) continue;
     for (const hunk of file.hunks || []) {
+      const addedLines = (hunk.lines || []).filter((line) => line && line.type === 'add');
+      const addedText = addedLines.map((line) => line.content).join('\n');
+      for (const r of applicable.filter((rule) => rule.multiline)) {
+        r._multilineRe.lastIndex = 0;
+        for (const match of addedText.matchAll(r._multilineRe)) {
+          const beforeMatch = addedText.slice(0, match.index);
+          const addedLineIndex = beforeMatch.split('\n').length - 1;
+          const line = addedLines[addedLineIndex];
+          if (line) {
+            findings.push({
+              file: file.file,
+              line: line.newLine,
+              severity: r.severity,
+              message: r.message,
+              suggestion: r.suggestion || undefined,
+              rule: r.id,
+            });
+          }
+        }
+        r._multilineRe.lastIndex = 0;
+      }
       for (const l of hunk.lines || []) {
         if (!l || l.type !== 'add') continue;
-        for (const r of applicable) {
+        for (const r of applicable.filter((rule) => !rule.multiline)) {
           let hit = false;
           try {
             hit = r._re.test(l.content);
