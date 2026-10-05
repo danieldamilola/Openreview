@@ -189,7 +189,6 @@ async function postInlineComments({
     body: {
       commit_id: commitId,
       event,
-      body: 'OpenReview code review.',
       comments: payload,
     },
   });

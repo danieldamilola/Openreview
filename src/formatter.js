@@ -16,23 +16,34 @@ const { SEVERITIES } = require('./promptBuilder');
 
 const SEVERITY_ORDER = { critical: 0, major: 1, minor: 2 };
 const SEVERITY_LABEL = { critical: 'Critical', major: 'Major', minor: 'Minor' };
+const SEVERITY_ICON = { critical: '🔴', major: '🟠', minor: '🟡' };
+const CATEGORY_PRESENTATION = {
+  correctness: ['🎯', 'Functional Correctness'],
+  security: ['🔐', 'Security & Privacy'],
+  'stability & availability': ['🧯', 'Stability & Availability'],
+  performance: ['🚀', 'Performance'],
+  maintainability: ['🧹', 'Maintainability & Code Quality'],
+  'code quality': ['🧹', 'Maintainability & Code Quality'],
+};
 
 function categoryLabel(f) {
   const category = String(f.category || 'Code quality').replace(/[-_]+/g, ' ').trim();
-  return category ? category[0].toUpperCase() + category.slice(1) : 'Code quality';
+  const presentation = CATEGORY_PRESENTATION[category.toLowerCase()];
+  return presentation ? presentation[1] : category ? category[0].toUpperCase() + category.slice(1) : 'Code quality';
 }
 
 function findingHeader(f) {
-  return `**${categoryLabel(f)} · ${SEVERITY_LABEL[f.severity] || 'Finding'}**`;
+  const category = String(f.category || 'Code quality').replace(/[-_]+/g, ' ').trim().toLowerCase();
+  const icon = (CATEGORY_PRESENTATION[category] || ['🔎'])[0];
+  return `**${icon} ${categoryLabel(f)} | ${SEVERITY_ICON[f.severity] || '🔎'} ${SEVERITY_LABEL[f.severity] || 'Finding'}**`;
 }
 
 function suggestionMarkdown(suggestion) {
   if (!suggestion) return '';
   const text = String(suggestion).trim();
   const looksLikeCode = /[{};`]/.test(text) || text.includes('\n');
-  return looksLikeCode
-    ? `**Suggested fix**\n\n\`\`\`suggestion\n${text}\n\`\`\``
-    : `**Suggested fix**\n\n${text}`;
+  const content = looksLikeCode ? `\n\n\`\`\`suggestion\n${text}\n\`\`\`` : `\n\n${text}`;
+  return `<details><summary>🛠️ Proposed fix</summary>${content}\n\n</details>`;
 }
 
 function agentPrompt() {
@@ -49,7 +60,7 @@ function findingDetails(f, { includePath = false } = {}) {
   const suggestion = suggestionMarkdown(f.suggestion);
   if (suggestion) parts.push(suggestion);
   if (includePath) {
-    parts.push(`<details><summary>Affected code</summary>\n\n- \`${f.file}\` at line ${f.line}\n\n</details>`);
+    parts.push(`- \`${f.file}\` at line ${f.line}`);
   }
   parts.push(
     `<details><summary>Prompt for coding agents</summary>\n\n${agentPrompt()}\n\n</details>`,
@@ -108,12 +119,10 @@ function formatSummary({ findings = [], stats = {}, config = {}, dropped = [], s
   if (stats && stats.truncated) lines.push('The diff was truncated to fit the review limits.');
   lines.push('');
 
-  const sorted = sortFindings(findings);
-  for (const f of sorted) {
-    lines.push(`### ${categoryLabel(f)} · ${SEVERITY_LABEL[f.severity] || 'Finding'}`);
-    lines.push('');
-    lines.push(findingDetails(f, { includePath: true }));
-    lines.push('');
+  if (total > 0) {
+    const sorted = sortFindings(findings);
+    const items = sorted.map((f) => `- ${SEVERITY_ICON[f.severity] || '🔎'} **${f.title ? oneLine(f.title) : oneLine(f.message)}** — ${categoryLabel(f)}, \`${f.file}:${f.line}\``);
+    lines.push(`<details><summary>Review findings (${total})</summary>\n\n${items.join('\n')}\n\n</details>`);
   }
   return lines.join('\n');
 }

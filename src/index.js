@@ -40,6 +40,28 @@ function resolveRepository(env = process.env) {
   return env.REVIEW_REPOSITORY || env.GITHUB_REPOSITORY || '';
 }
 
+function reviewStatusBody(message) {
+  return `## OpenReview code review\n\n⏳ **Review in progress**\n\n${message}`;
+}
+
+async function postFailureStatus(env) {
+  const token = env.GITHUB_TOKEN || env.INPUT_GITHUB_TOKEN || env['INPUT_GITHUB-TOKEN'] || '';
+  const repo = resolveRepository(env);
+  const prNumber = env.PR_NUMBER || env.INPUT_PR_NUMBER || '';
+  if (!token || !repo || !prNumber || env.REVIEW_DRY_RUN) return;
+  const runUrl = env.GITHUB_RUN_ID && env.GITHUB_REPOSITORY
+    ? `${env.GITHUB_SERVER_URL || 'https://github.com'}/${env.GITHUB_REPOSITORY}/actions/runs/${env.GITHUB_RUN_ID}`
+    : '';
+  const detail = runUrl ? `The [workflow run](${runUrl}) has the error details.` : 'Check the OpenReview workflow run for the error details.';
+  await upsertSummaryComment({
+    token,
+    repo,
+    prNumber,
+    body: `## OpenReview code review\n\n❌ **Review failed**\n\n${detail}`,
+    apiUrl: env.GITHUB_API_URL,
+  });
+}
+
 async function main() {
   const env = process.env;
   const config = loadConfig();
@@ -48,6 +70,17 @@ async function main() {
   const repo = resolveRepository(env);
   const prNumber = env.PR_NUMBER || env.INPUT_PR_NUMBER || '';
   const canPost = Boolean(token && repo && prNumber);
+  const shouldPost = canPost && !env.REVIEW_DRY_RUN;
+
+  if (shouldPost) {
+    await upsertSummaryComment({
+      token,
+      repo,
+      prNumber,
+      body: reviewStatusBody('Getting the pull request changes…'),
+      apiUrl: env.GITHUB_API_URL,
+    });
+  }
 
   let diffResult;
   let rawDiff = '';
@@ -78,6 +111,15 @@ async function main() {
         });
         if (plan.skip) {
           const summary = `_Already reviewed at ${plan.lastReviewedSha}. No new commits since the last review._`;
+          if (shouldPost) {
+            await upsertSummaryComment({
+              token,
+              repo,
+              prNumber,
+              body: `## OpenReview code review\n\n✅ ${summary}`,
+              apiUrl: env.GITHUB_API_URL,
+            });
+          }
           setOutput('summary', summary);
           setOutput('findings-json', '[]');
           process.stdout.write(summary + '\n');
@@ -108,6 +150,16 @@ async function main() {
         rawDiff = '';
       }
     }
+  }
+
+  if (shouldPost) {
+    await upsertSummaryComment({
+      token,
+      repo,
+      prNumber,
+      body: reviewStatusBody(`Analyzing ${diffResult.files.length} changed ${diffResult.files.length === 1 ? 'file' : 'files'}…`),
+      apiUrl: env.GITHUB_API_URL,
+    });
   }
 
   const provider = createProvider({
@@ -141,7 +193,7 @@ async function main() {
   if (stepSummary) fs.appendFileSync(stepSummary, result.summary + '\n', 'utf8');
   else process.stdout.write(result.summary + '\n');
 
-  if (canPost && !env.REVIEW_DRY_RUN) {
+  if (shouldPost) {
     const body = `${result.summary}\n\n${reviewedStateMarker(usedHead)}`;
     const upserted = await upsertSummaryComment({
       token,
@@ -169,10 +221,15 @@ async function main() {
 }
 
 if (require.main === module) {
-  main().catch((err) => {
+  main().catch(async (err) => {
     process.stderr.write(`openreview failed: ${err && err.message ? err.message : err}\n`);
-    process.exit(1);
+    try {
+      await postFailureStatus(process.env);
+    } catch (statusError) {
+      process.stderr.write(`openreview failure status could not be posted: ${statusError.message}\n`);
+    }
+    process.exitCode = 1;
   });
 }
 
-module.exports = { main, resolveRepository };
+module.exports = { main, resolveRepository, reviewStatusBody, postFailureStatus };
