@@ -48,14 +48,15 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with: { fetch-depth: 0 }
-      - uses: ./  # this action
+      - uses: danieldamilola/Openreview@main
         with:
           github-token: ${{ secrets.GITHUB_TOKEN }}
+          pr-number: ${{ github.event.pull_request.number }}
           provider: openai-compatible
           model: gpt-4o-mini
           base: ${{ github.event.pull_request.base.sha }}
           head: ${{ github.event.pull_request.head.sha }}
           ignore-patterns: '**/*.lock,dist/'
         env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          REVIEW_PROVIDER_API_KEY: ${{ secrets.REVIEW_PROVIDER_API_KEY }}
 ```

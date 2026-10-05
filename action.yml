@@ -7,6 +7,9 @@ inputs:
   github-token:
     description: 'GitHub token for posting reviews (secrets.GITHUB_TOKEN)'
     required: true
+  pr-number:
+    description: 'Pull request number to review'
+    required: false
   provider:
     description: "LLM backend: 'opencode' (opencode CLI) or 'openai-compatible'"
     required: false

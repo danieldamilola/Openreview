@@ -59,9 +59,9 @@ Keys always come from the environment; they are never logged.
 
 ## Configuration
 
-See `.openreview.yml` for every knob: focus areas, severity threshold, ignore
-patterns, diff budgets, comment mode, opt-out marker. Action inputs in
-`action.yml` (or `REVIEW_*` env vars) override the file.
+Action inputs in `action.yml` configure focus areas, severity threshold,
+ignore patterns, diff budgets, and comment mode. `REVIEW_*` environment
+variables can also set provider options.
 
 ## Fork safety
 

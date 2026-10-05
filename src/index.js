@@ -40,9 +40,9 @@ async function main() {
   const env = process.env;
   const config = loadConfig();
   const cwd = env.GITHUB_WORKSPACE || process.cwd();
-  const token = env.GITHUB_TOKEN || '';
+  const token = env.GITHUB_TOKEN || env.INPUT_GITHUB_TOKEN || env['INPUT_GITHUB-TOKEN'] || '';
   const repo = env.GITHUB_REPOSITORY || '';
-  const prNumber = env.PR_NUMBER || '';
+  const prNumber = env.PR_NUMBER || env.INPUT_PR_NUMBER || '';
   const canPost = Boolean(token && repo && prNumber);
 
   let diffResult;
