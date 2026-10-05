@@ -5,7 +5,7 @@
   "type": "commonjs",
   "main": "src/index.js",
   "scripts": {
-    "test": "node --test src/diffCollector.test.js src/promptBuilder.test.js src/formatter.test.js src/providers.test.js src/reviewEngine.test.js src/config.test.js src/rulesEngine.test.js",
+    "test": "node --test src/diffCollector.test.js src/promptBuilder.test.js src/formatter.test.js src/providers.test.js src/reviewEngine.test.js src/config.test.js src/rulesEngine.test.js src/index.test.js",
     "review": "node src/index.js"
   },
   "engines": {

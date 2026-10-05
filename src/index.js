@@ -36,12 +36,16 @@ function oneLine(s) {
   return String(s).replace(/\r?\n/g, ' ').slice(0, 4000);
 }
 
+function resolveRepository(env = process.env) {
+  return env.REVIEW_REPOSITORY || env.GITHUB_REPOSITORY || '';
+}
+
 async function main() {
   const env = process.env;
   const config = loadConfig();
   const cwd = env.GITHUB_WORKSPACE || process.cwd();
   const token = env.GITHUB_TOKEN || env.INPUT_GITHUB_TOKEN || env['INPUT_GITHUB-TOKEN'] || '';
-  const repo = env.GITHUB_REPOSITORY || '';
+  const repo = resolveRepository(env);
   const prNumber = env.PR_NUMBER || env.INPUT_PR_NUMBER || '';
   const canPost = Boolean(token && repo && prNumber);
 
@@ -171,4 +175,4 @@ if (require.main === module) {
   });
 }
 
-module.exports = { main };
+module.exports = { main, resolveRepository };

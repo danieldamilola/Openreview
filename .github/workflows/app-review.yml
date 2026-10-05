@@ -37,7 +37,7 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ steps.app-token.outputs.token }}
           GITHUB_API_URL: ${{ github.api_url }}
-          GITHUB_REPOSITORY: ${{ github.event.client_payload.repository }}
+          REVIEW_REPOSITORY: ${{ github.event.client_payload.repository }}
           PR_NUMBER: ${{ github.event.client_payload.pr_number }}
           BASE_SHA: ${{ github.event.client_payload.base_sha }}
           HEAD_SHA: ${{ github.event.client_payload.head_sha }}
